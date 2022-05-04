@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script>
+
+  function checkChecked(){
+    if(document.getElementById("myCheck").checked === false){
+      console.log("not checked");
+    }else{
+      console.log("checked");
+    }
+
+  }
+  </script>
+
+</head>
+<body>
+
+<h1 id= "s">Checkbox:</h1> <input type="checkbox" id="myCheck" onclick="checkChecked()">
+
+<button onclick="check()">Check Checkbox</button>
+<button onclick="uncheck()">Uncheck Checkbox</button>
+
+
+</body>
+</html>

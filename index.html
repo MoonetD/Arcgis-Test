@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>ArcGIS API for JavaScript Tutorials: Display a map</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/app.js" charset="utf-8"></script>
+  <script src="https://js.arcgis.com/4.23/"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <script>
+  function checkChecked(layer) {
+    if ($("checkboxCommercial").checked === false) {
+      layer.visible = false;
+    } else {
+      layer.visible = true;
+    };
+  }
+  
+    require([
+      "esri/config",
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/widgets/Search",
+      "esri/layers/FeatureLayer",
+      "esri/identity/IdentityManager",
+      "esri/identity/OAuthInfo",
+      "esri/identity/Credential",
+      "esri/widgets/Widget",
+      "esri/widgets/Legend",
+      "esri/widgets/Expand",
+      "esri/widgets/FeatureTable",
+      "esri/smartMapping/renderers/color"
+    ], function(esriConfig, Map, MapView, Search, FeatureLayer, esriId, OAuthInfo, Credential, Widget, Legend, Expand, FeatureTable, colorRendererCreator) {
+
+
+      esriConfig.apiKey = "AAPK22c2f653aeb342ea851e26de23331e30wW2Z0QC5WnLrsIhSIlV0WDndVBR0fGj4hAcMIm0U0HfnEYqxl1riQH5Hahcx9tP7";
+
+      var token = "_lVLxX3Y8vEThQrvytHQavSbE_JAG2O5_EH7Ilv94FCXxQCoCERoQvm3vqX5z71AIFcPkg8Y5OHZk9c5IOOn1sb9vN-j-6jOPk5GYm-VcAZMLXt82r-KmMqnYf0ZwA66";
+
+
+
+      // Add Layers Section
+
+      // Add Population Layer
+      esriConfig.request.interceptors.push({
+        urls: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/test2/FeatureServer/0",
+        before: function(params) {
+          params.requestOptions.query = params.requestOptions.query || {};
+          params.requestOptions.query.token = token;
+        },
+      });
+      const populationTemplate = {
+        title: "Block <strong class = 'numbers'>{BLOCKCE20}</strong> has a population of <strong class = 'numbers'>{Total_Pop }</strong>",
+        lastEditInfoEnabled: true,
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "Population",
+            label: "Population Density"
+          }, {
+            fieldName: "ALAND20",
+            label: "Land Area"
+          }]
+        }]
+      };
+
+      const populationLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/test2/FeatureServer/0",
+        popupTemplate: populationTemplate
+      });
+
+      // Add Crimemap Layer
+      esriConfig.request.interceptors.push({
+        urls: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/cleaned_drugcrime/FeatureServer/0",
+        before: function(params) {
+          params.requestOptions.query = params.requestOptions.query || {};
+          params.requestOptions.query.token = token;
+        },
+      });
+      const crimeTemplate = {
+        title: "<strong class = 'numbers'>{Counts}</strong> Case of Type1&2 Drug Related Crime Reported at <strong class = 'numbers'>{Location}</strong>",
+        lastEditInfoEnabled: true,
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "Month",
+            label: "Month"
+          }, {
+            fieldName: "Year",
+            label: "Year"
+          }, {
+            fieldName: "Statute_Desc",
+            label: "Statute_Desccription"
+          }]
+        }]
+      };
+
+      const crimeLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/cleaned_drugcrime/FeatureServer/0",
+        popupTemplate: crimeTemplate
+      });
+
+
+      // Add Busstop map Layer
+      esriConfig.request.interceptors.push({
+        urls: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/final_bus_data/FeatureServer/0",
+        before: function(params) {
+          params.requestOptions.query = params.requestOptions.query || {};
+          params.requestOptions.query.token = token;
+        },
+      });
+
+      const busStopTemplate = {
+        title: "Route <strong class = 'numbers'>{stops_csv_ROUTE}</strong> in <strong class = 'numbers'>{stops_csv_DIRECTION}</strong> Direction",
+        lastEditInfoEnabled: true,
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "routes_csv_RT_NAME",
+            label: "ROUTE NAME"
+          }, {
+            fieldName: "stops_csv_ROUTE",
+            label: "DIRECTION"
+          }, {
+            fieldName: "stops_csv_RXST_ADD",
+            label: "STOP NAME"
+          }, {
+            fieldName: "stops_csv_RROUTES_SER",
+            label: "CORSSING OTHER ROUTES"
+          }, {
+            fieldName: "routes_csv_runs_on_weekdays",
+            label: "Runs on Weekdays?"
+          }, {
+            fieldName: "routes_csv_runs_on_saturday",
+            label: "Runs on Saturdays?"
+          }, {
+            fieldName: "routes_csv_runs_on_sunday",
+            label: "Runs on Sundays?"
+          }]
+        }]
+      };
+
+      const busStopRender = {
+        type: "unique-value",
+        legendOptions: {
+          title: "Bus Stops"
+        },
+        field: "stops_csv_ROUTE",
+        defaultSymbol: {
+          type: "simple-marker",
+          color: "#1D5C63",
+          size: "6px"
+        }
+      };
+
+      const busStops = new FeatureLayer({
+        url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/final_bus_data/FeatureServer/0",
+        popupTemplate: busStopTemplate,
+        renderer: busStopRender
+      });
+
+      // Add Opiod Provider Layer
+      esriConfig.request.interceptors.push({
+        urls: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/ri_opiod_treatment_providers/FeatureServer/0",
+        before: function(params) {
+          params.requestOptions.query = params.requestOptions.query || {};
+          params.requestOptions.query.token = token;
+        },
+      });
+
+      const OTPTemplate = {
+        title: "<strong class = 'numbers'>{PROVIDER_NAME}</strong>",
+        lastEditInfoEnabled: true,
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "ADDRESS_LINE_1",
+            label: "address"
+          }, {
+            fieldName: "PHONE",
+            label: "PHONE NUMBER"
+          }]
+        }]
+      };
+      const opioidTreatmentProvider = new FeatureLayer({
+        url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/ri_opiod_treatment_providers/FeatureServer/0",
+        popupTemplate: OTPTemplate,
+        renderer: {
+          type: "unique-value",
+          legendOptions: {
+            title: "Opiod treamtment Providers"
+          },
+          field: "ADDRESS_LINE_1",
+          defaultSymbol: {
+            type: "simple-marker",
+            color: "#B4E197",
+            size: "6px"
+          }
+        }
+      });
+
+      // Add Commercial Building Layer
+      esriConfig.request.interceptors.push({
+        urls: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/final_commercial_building_data/FeatureServer/0",
+        before: function(params) {
+          params.requestOptions.query = params.requestOptions.query || {};
+          params.requestOptions.query.token = token;
+        },
+      });
+
+      const commercialTemplate = {
+        title: "<strong class = 'numbers'>{address}</strong> is Owned by <strong class = 'numbers'>{owner}</strong> and <strong class = 'numbers'>{co_owner}</strong>",
+        lastEditInfoEnabled: true,
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "land_use_description",
+            label: "Usage Description"
+          }, {
+            fieldName: "price",
+            label: "Price of Property"
+          }, {
+            fieldName: "price_per_sqft",
+            label: "Price per Square Footage"
+          }]
+        }]
+      };
+
+      const commercialLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/final_commercial_building_data/FeatureServer/0",
+        popupTemplate: commercialTemplate,
+        visible: false,
+        renderer: {
+          type: "unique-value",
+          legendOptions: {
+            title: "Commercial Buildings"
+          },
+          field: "address ",
+          defaultSymbol: {
+            type: "simple-marker",
+            color: "#b2b2b2",
+            size: "6px"
+          }
+        }
+      });
+      //map.add(layer);
+
+      //map section
+      const map = new Map({
+        basemap: "arcgis-light-gray", // Basemap layer service
+        layers: [populationLayer, crimeLayer, busStops, opioidTreatmentProvider, commercialLayer]
+
+      });
+      const view = new MapView({
+        map: map,
+        center: [-71.41067701451892, 41.82577313883494],
+        zoom: 12,
+        container: "viewDiv" // Div element
+      });
+
+      // toggle visibility
+
+      //test out renderer
+      let colorParams = {
+        layer: populationLayer,
+        view: view,
+        field: "Population ",
+        theme: "above"
+      }
+
+      colorRendererCreator.createContinuousRenderer(colorParams)
+        .then(function(response) {
+          populationLayer.renderer = response.renderer;
+        });
+
+      const search = new Search({ //Add Search widget
+        view: view
+      });
+
+      const legend = new Legend({
+        view: view,
+        container: legendDiv
+      });
+      // Expand widget to expand and contract the legend widget
+      const expand = new Expand({
+        view: view,
+        content: document.getElementById('legendDiv'),
+        expanded: true
+      });
+      //Adding a feature Table
+      const featureTable = new FeatureTable({
+        view: view, // The view property must be set for the select/highlight to work
+        layer: opioidTreatmentProvider,
+        container: "tableDiv",
+        fieldConfigs: [{
+          name: "PROVIDER_NAME",
+          label: "Opiod Treatment Provider",
+          direction: "asc"
+        }, {
+          name: "ADDRESS_LINE_1",
+          label: "Adress"
+        }, {
+          name: "PHONE",
+          label: "Phone Number"
+        }]
+      });
+      const featureTableExpand = new Expand({
+        view: view,
+        content: featureTable,
+        expanded: false
+
+      })
+      //Adding UIs
+      view.ui.add(featureTableExpand, {
+        position: "top-left"
+      });
+      view.ui.add(expand, {
+        position: "top-right"
+      });
+
+      view.ui.add(search, {
+        position: "top-left"
+      });
+      view.whenLayerView(busStops).then((layerView) => {
+        const field = "ROUTE";
+
+        const filterSelector = document.getElementById("filter");
+        filterSelector.addEventListener("input", (event) => {
+          let filterExpression;
+
+          if (event.target.value === "1=1") {
+            //show all values
+            filterExpression = event.target.value
+          } else {
+            console.log(`${field}='${event.target.value}'`);
+            filterExpression = `${field}=${event.target.value}`;
+          }
+          layerView.filter = {
+            where: filterExpression
+          }
+        })
+      })
+    });
+  </script>
+
+
+</head>
+
+<body>
+  <div id="viewDiv"> </div>
+  <div id="tableDiv">
+  </div>
+  <div id="infoDiv">
+    <div id="legendDiv">
+      <h1> Data Maps</h1>
+      <input type="checkbox" id="checkboxCommercial" onclick="checkChecked(commercialLayer)">
+      <select class="esri-select" id="filter">
+        <option value="1=1">All</option>
+        <option value="1">Route 1</option>
+        <option value="3">Route 3</option>
+        <option value="6">Route 6</option>
+        <option value="8">Route 8</option>
+        <option value="11">Route 11</option>
+        <option value="12">Route 12</option>
+        <option value="14">Route 14</option>
+        <option value="9">Route 9</option>
+        <option value="10">Route 10</option>
+        <option value="13">Route 13</option>
+        <option value="17">Route 17</option>
+        <option value="18">Route 18</option>
+      </select>
+    </div>
+  </div>
+  <script>
+
+  </script>
+
+
+
+</body>
+
+</html>
