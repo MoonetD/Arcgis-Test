@@ -14,7 +14,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <script>
-    function checkChecked(ev ,layer) {
+    function checkChecked(ev, layer) {
       if ($("#" + ev)[0].checked === false) {
         //console.log("turned false");
         layer.visible = false;
@@ -40,14 +40,59 @@
       "esri/smartMapping/renderers/color"
     ], function(esriConfig, Map, MapView, Search, FeatureLayer, esriId, OAuthInfo, Credential, Widget, Legend, Expand, FeatureTable, colorRendererCreator) {
 
-
+      var apiKey = "AAPK22c2f653aeb342ea851e26de23331e30wW2Z0QC5WnLrsIhSIlV0WDndVBR0fGj4hAcMIm0U0HfnEYqxl1riQH5Hahcx9tP7";
       esriConfig.apiKey = "AAPK22c2f653aeb342ea851e26de23331e30wW2Z0QC5WnLrsIhSIlV0WDndVBR0fGj4hAcMIm0U0HfnEYqxl1riQH5Hahcx9tP7";
 
-      var token = "_lVLxX3Y8vEThQrvytHQavSbE_JAG2O5_EH7Ilv94FCXxQCoCERoQvm3vqX5z71AIFcPkg8Y5OHZk9c5IOOn1sb9vN-j-6jOPk5GYm-VcAZMLXt82r-KmMqnYf0ZwA66";
+      var token = "c1Z44lDFdhjntMCjgAXMANegA-a8ugtm4rzMnd7uUyktu9KxWuVdKrmTdw6yVX1hVZZC8uvJSwOPMYqlnHSUW5aposDja2NUP3DoajnP_rQjthCoiCCyV7LtqlOV9nKC";
 
 
 
       // Add Layers Section
+      // Add Emergency Call Layers
+      const emergencyTemplate = {
+        title: "Block <strong class = 'numbers'>{GEOID}</strong>",
+        lastEditInfoEnabled: true,
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "CountCat",
+            label: " Count of OD EMS Runs (Range)"
+          }, {
+            fieldName: "Count_ ",
+            label: " Count of OD EMS Run"
+          }]
+        }]
+      };
+
+      const emergencyLayer = new FeatureLayer({
+        url: "https://services1.arcgis.com/dkWT1XL4nglP5MLP/ArcGIS/rest/services/Opioid_Overdose_Related_EMS_Runs_by_Census_Block_Group_08092020_to_08082021/FeatureServer/7",
+        popupTemplate: emergencyTemplate,
+        visible: false
+      });
+      // Add Smart Location Layers
+      const walkabilityTemplate = {
+        title: "Block <strong class = 'numbers'>{GEOID20 }</strong> has WalkabilityIndex of <strong class = 'numbers'>{NatWalkInd}</strong>",
+        lastEditInfoEnabled: true,
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "TotPop",
+            label: " Population, 2018 "
+          }, {
+            fieldName: "TotEmp",
+            label: " Total employment, 2017"
+          },{
+            fieldName:"CountHU",
+            label:" Housing units"
+          }]
+        }]
+      };
+
+      const walkabilityLayer = new FeatureLayer({
+        url: "https://geodata.epa.gov/arcgis/rest/services/OA/WalkabilityIndex/MapServer/0",
+        popupTemplate: walkabilityTemplate,
+        visible: false
+      });
 
       // Add Population Layer
       esriConfig.request.interceptors.push({
@@ -75,7 +120,7 @@
       const populationLayer = new FeatureLayer({
         url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/test2/FeatureServer/0",
         popupTemplate: populationTemplate,
-        visible:false
+        visible: false
       });
 
       // Add Crimemap Layer
@@ -107,7 +152,7 @@
       const crimeLayer = new FeatureLayer({
         url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/cleaned_drugcrime/FeatureServer/0",
         popupTemplate: crimeTemplate,
-        visible:false
+        visible: false
       });
 
 
@@ -167,7 +212,7 @@
         url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/final_bus_data/FeatureServer/0",
         popupTemplate: busStopTemplate,
         renderer: busStopRender,
-        visible:false
+        visible: false
       });
 
       // Add Opiod Provider Layer
@@ -196,7 +241,7 @@
       const opioidTreatmentProvider = new FeatureLayer({
         url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/ri_opiod_treatment_providers/FeatureServer/0",
         popupTemplate: OTPTemplate,
-        visible:false,
+        visible: false,
         renderer: {
           type: "unique-value",
           legendOptions: {
@@ -255,28 +300,145 @@
           }
         }
       });
+
+      //Adding Social Determinant of Health Layers
+      esriConfig.request.interceptors.push({
+        urls: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/social_determinants_of_health/FeatureServer/0",
+        before: function(params) {
+          params.requestOptions.query = params.requestOptions.query || {};
+          params.requestOptions.query.token = token;
+        },
+      });
+      const SDHTemplate = {
+        title: "<strong class = 'numbers'>{location_name}</strong> is a <strong class = 'numbers'>{top_category }</strong>",
+        lastEditInfoEnabled: true,
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "top_category",
+            label: "Top Category"
+          },{
+            fieldName: "street_address",
+            label: "Street Address"
+          }, {
+            fieldName: "phone_number",
+            label: "Phone Number"
+          }]
+        }]
+      };
+
+      const SDHLabelSize = "5px";
+      const SDHOutline = {
+        width:"0.1px"
+      }
+      const SDHLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/8veDRDlhXWywYP3S/arcgis/rest/services/social_determinants_of_health/FeatureServer/0",
+        popupTemplate: SDHTemplate,
+        visible: true,
+        renderer:{
+          type: "unique-value",
+          legendOptions: {
+            title: "Social Determinants of Health"
+          },
+          field: "top_category",
+          uniqueValueInfos:[{
+            value:"Colleges, Universities, and Professional Schools",
+            label:"Colleges, Universities, and Professional Schools",
+            symbol:{
+              type:"simple-marker",
+              color:"#1D5C63",
+              size:SDHLabelSize,
+              outline:SDHOutline
+            }
+          },{
+            value:"Other Schools and Instruction",
+            label:"Other Schools and Instruction",
+            symbol:{
+              type:"simple-marker",
+              color:"#1D5C63",
+              size:SDHLabelSize,
+              outline:SDHOutline
+            }
+          },{
+            value:"Elementary and Secondary Schools",
+            label:"Elementary and Secondary Schools",
+            symbol:{
+              type:"simple-marker",
+              color:"#417D7A",
+              size:SDHLabelSize,
+              outline:SDHOutline
+            }
+          },{
+            value:"Technical and Trade Schools",
+            label:"Technical and Trade Schools",
+            symbol:{
+              type:"simple-marker",
+              color:"#EDE6DB",
+              size:SDHLabelSize,
+              outline:SDHOutline
+            }
+          },{
+            value:"Grocery Stores",
+            label:"Grocery Stores",
+            symbol:{
+              type:"simple-marker",
+              color:"#E6BA95",
+              size:SDHLabelSize,
+              outline:SDHOutline
+            }
+          },{
+            value:"Museums, Historical Sites, and Similar Institutions",
+            label:"Natural Parks, Museums, Historical Sites, and Similar Institutions",
+            symbol:{
+              type:"simple-marker",
+              color:"#A2B38B",
+              size:SDHLabelSize,
+              outline:SDHOutline
+            }
+          },{
+            value:"Employment Services",
+            label:"Employment Services",
+            symbol:{
+              type:"simple-marker",
+              color:"#AC7D88",
+              size:SDHLabelSize,
+              outline:SDHOutline
+            }
+          }],
+          defaultSymbol: {
+            type: "simple-marker",
+            color: "#1D5C63",
+            size: SDHLabelSize
+          }
+        }
+      });
       //Toggle Layers
 
+      $("#checkboxWalkability").on("click", function(e) {
+        checkChecked(e.target.id, walkabilityLayer);
+      });
+      $("#checkboxEmergency").on("click", function(e) {
+        checkChecked(e.target.id, emergencyLayer);
+      });
       $("#checkboxCommercial").on("click", function(e) {
-        console.log(e.target.id);
-        checkChecked(e.target.id,commercialLayer);
+        checkChecked(e.target.id, commercialLayer);
       });
       $("#checkboxOTP").on("click", function(e) {
-        checkChecked(e.target.id,opioidTreatmentProvider);
+        checkChecked(e.target.id, opioidTreatmentProvider);
       });
       $("#checkboxBusStops").on("click", function(e) {
-        checkChecked(e.target.id,busStops);
+        checkChecked(e.target.id, busStops);
       });
       $("#checkboxDrugCrime").on("click", function(e) {
-        checkChecked(e.target.id,crimeLayer);
+        checkChecked(e.target.id, crimeLayer);
       });
       $("#checkboxPopulation").on("click", function(e) {
-        checkChecked(e.target.id,populationLayer);
+        checkChecked(e.target.id, populationLayer);
       });
       //map section
       const map = new Map({
         basemap: "arcgis-light-gray", // Basemap layer service
-        layers: [populationLayer, crimeLayer, busStops, opioidTreatmentProvider, commercialLayer]
+        layers: [emergencyLayer, walkabilityLayer,populationLayer, crimeLayer, busStops, opioidTreatmentProvider, commercialLayer,SDHLayer]
 
       });
       const view = new MapView({
@@ -302,7 +464,8 @@
         });
 
       const search = new Search({ //Add Search widget
-        view: view
+        view: view,
+
       });
 
       const legend = new Legend({
@@ -316,32 +479,11 @@
         expanded: true
       });
       //Adding a feature Table
-      const featureTable = new FeatureTable({
-        view: view, // The view property must be set for the select/highlight to work
-        layer: opioidTreatmentProvider,
-        container: "tableDiv",
-        fieldConfigs: [{
-          name: "PROVIDER_NAME",
-          label: "Opiod Treatment Provider",
-          direction: "asc"
-        }, {
-          name: "ADDRESS_LINE_1",
-          label: "Adress"
-        }, {
-          name: "PHONE",
-          label: "Phone Number"
-        }]
-      });
-      const featureTableExpand = new Expand({
-        view: view,
-        content: featureTable,
-        expanded: false
 
-      })
       //Adding UIs
-      view.ui.add(featureTableExpand, {
-        position: "top-left"
-      });
+      // view.ui.add(featureTableExpand, {
+      //   position: "top-left"
+      // });
       view.ui.add(expand, {
         position: "top-right"
       });
@@ -349,8 +491,8 @@
       view.ui.add(search, {
         position: "top-left"
       });
-      view.whenLayerView(busStops).then((layerView) => {
-        const field = "ROUTE";
+      view.whenLayerView(SDHLayer).then((layerView) => {
+        const field = "top_category";
 
         const filterSelector = document.getElementById("filter");
         filterSelector.addEventListener("input", (event) => {
@@ -360,8 +502,9 @@
             //show all values
             filterExpression = event.target.value
           } else {
-            console.log(`${field}='${event.target.value}'`);
-            filterExpression = `${field}=${event.target.value}`;
+
+            filterExpression = `${field}='${event.target.value}'`;
+              console.log(filterExpression);
           }
           layerView.filter = {
             where: filterExpression
@@ -376,44 +519,40 @@
 
 <body>
   <div id="viewDiv"> </div>
-  <div id="tableDiv">
-  </div>
+
   <div id="infoDiv">
     <div id="legendDiv">
       <h1> Data Maps</h1>
-<!-- label layers -->
+      <!-- label layers -->
 
-<div class="dropdown">
-  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-    Toggle Layers
-  </button>
-  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-    <li><label for="checkboxOTP">Opiod Treatment Provider:</label> <input class="dropdown-item" type="checkbox" id="checkboxOTP"></li>
-    <li><label for="checkboxCommercial">Commercial:</label> <input class="dropdown-item" type="checkbox" id="checkboxCommercial"></li>
-    <li><label for="checkboxBusStops">Bus Stops:</label> <input class="dropdown-item" type="checkbox" id="checkboxBusStops"></li>
-    <li><label for="checkboxDrugCrime">Drug Crime:</label> <input class="dropdown-item" type="checkbox" id="checkboxDrugCrime"></li>
-    <li><label for="checkboxPopulation">Population:</label> <input class="dropdown-item" type="checkbox" id="checkboxPopulation"></li>
+      <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+          Toggle Layers
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+          <li><label for="checkboxEmergency">Emergency Call Locations:</label> <input class="dropdown-item" type="checkbox" id="checkboxEmergency"></li>
+          <li><label for="checkboxWalkability">WalkabilityIndex:</label> <input class="dropdown-item" type="checkbox" id="checkboxWalkability"></li>
+          <li><label for="checkboxOTP">Opiod Treatment Provider:</label> <input class="dropdown-item" type="checkbox" id="checkboxOTP"></li>
+          <li><label for="checkboxCommercial">Commercial:</label> <input class="dropdown-item" type="checkbox" id="checkboxCommercial"></li>
+          <li><label for="checkboxBusStops">Bus Stops:</label> <input class="dropdown-item" type="checkbox" id="checkboxBusStops"></li>
+          <li><label for="checkboxDrugCrime">Drug Crime:</label> <input class="dropdown-item" type="checkbox" id="checkboxDrugCrime"></li>
+          <li><label for="checkboxPopulation">Population:</label> <input class="dropdown-item" type="checkbox" id="checkboxPopulation"></li>
 
-  </ul>
-</div>
+        </ul>
+      </div>
 
 
 
 
       <select class="esri-select" id="filter">
         <option value="1=1">All</option>
-        <option value="1">Route 1</option>
-        <option value="3">Route 3</option>
-        <option value="6">Route 6</option>
-        <option value="8">Route 8</option>
-        <option value="11">Route 11</option>
-        <option value="12">Route 12</option>
-        <option value="14">Route 14</option>
-        <option value="9">Route 9</option>
-        <option value="10">Route 10</option>
-        <option value="13">Route 13</option>
-        <option value="17">Route 17</option>
-        <option value="18">Route 18</option>
+        <option value="Colleges, Universities, and Professional Schools">Universities/ Professional Schools</option>
+        <option value="Elementary and Secondary Schools">Elementary/Secondary Schools</option>
+        <option value="Technical and Trade Schools">Technical/Trade Schools</option>
+        <option value="Other Schools and Instruction">Other Schools</option>
+        <option value="Grocery Stores">Grocery Stores</option>
+        <option value="Museums, Historical Sites, and Similar Institutions">Park/Museum</option>
+        <option value="Employment Services">Employment Services</option>
       </select>
     </div>
   </div>

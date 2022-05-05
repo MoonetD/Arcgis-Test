@@ -12,14 +12,14 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <script>
-  function checkChecked(layer) {
-    if ($("checkboxCommercial").checked === false) {
-      layer.visible = false;
-    } else {
-      layer.visible = true;
-    };
-  }
-  
+    function checkChecked(layer) {
+      if ($("checkboxCommercial").checked === false) {
+        layer.visible = false;
+      } else {
+        layer.visible = true;
+      };
+    }
+
     require([
       "esri/config",
       "esri/Map",
@@ -36,7 +36,7 @@
       "esri/smartMapping/renderers/color"
     ], function(esriConfig, Map, MapView, Search, FeatureLayer, esriId, OAuthInfo, Credential, Widget, Legend, Expand, FeatureTable, colorRendererCreator) {
 
-
+      var api_key = "AAPK22c2f653aeb342ea851e26de23331e30wW2Z0QC5WnLrsIhSIlV0WDndVBR0fGj4hAcMIm0U0HfnEYqxl1riQH5Hahcx9tP7";
       esriConfig.apiKey = "AAPK22c2f653aeb342ea851e26de23331e30wW2Z0QC5WnLrsIhSIlV0WDndVBR0fGj4hAcMIm0U0HfnEYqxl1riQH5Hahcx9tP7";
 
       var token = "_lVLxX3Y8vEThQrvytHQavSbE_JAG2O5_EH7Ilv94FCXxQCoCERoQvm3vqX5z71AIFcPkg8Y5OHZk9c5IOOn1sb9vN-j-6jOPk5GYm-VcAZMLXt82r-KmMqnYf0ZwA66";
@@ -279,6 +279,13 @@
 
       const search = new Search({ //Add Search widget
         view: view
+        includeDefaultSources: false,
+        sources: [{
+          name: "apiKey locator",
+          placeholder: "APIs are Key",
+          apiKey: "YOUR_API_KEY",
+          url: "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer"
+        }]
       });
 
       const legend = new Legend({
